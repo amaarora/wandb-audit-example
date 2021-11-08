@@ -57,7 +57,7 @@ def eval_fn(model, eval_data_loader, epoch):
         return fin_loss / len(eval_data_loader)
 
 
-def train(args=None, wandb_run=None):
+def main(args=None, wandb_run=None):
     # train and eval datasets
     train_dataset = torchvision.datasets.ImageFolder(
         Config["TRAIN_DATA_DIR"], transform=Config["TRAIN_AUG"]
@@ -92,6 +92,12 @@ def train(args=None, wandb_run=None):
             model, train_dataloader, optimizer, epoch
         )
         avg_loss_eval = eval_fn(model, eval_dataloader, epoch)
+        wandb.run.log({
+            "epoch": epoch, 
+            "learning rate": lr, 
+            "train loss": avg_loss_train, 
+            "evaluation loss": avg_loss_eval
+            })
         saver.save_checkpoint(epoch, metric=avg_loss_eval)
         
 
@@ -103,6 +109,8 @@ if __name__ == "__main__":
 
     setup_default_logging()
 
+    # create wandb run and save src code files
     run = wandb.init(project=args.project)
+    wandb.save('./src/*')
 
-    train(args=args, wandb_run=run)
+    main(args=args, wandb_run=run)
