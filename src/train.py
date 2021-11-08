@@ -7,7 +7,7 @@ from config import Config
 import timm
 import torch.nn as nn
 from tqdm import tqdm
-from wandb_checkpoint_saver import CheckpointSaver
+from wandb_checkpoint import CheckpointSaver
 import wandb
 import logging 
 from timm.utils.log import setup_default_logging
