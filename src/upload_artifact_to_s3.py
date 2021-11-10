@@ -26,10 +26,9 @@ def main(args):
         fpath = path + '/' + fname
 
         # create hash dict
-        f = open(fpath,"rb")
-        bytes = f.read() 
-        readable_hash = hashlib.sha256(bytes).hexdigest()
-        hash_dict = {'filename': fname, 'hash': readable_hash}
+        chksum = artifact.digest
+        hash_dict = {'filename': fname, 'hash': chksum}
+
         # dump dict to YAML
         with open(tmpdir+'/hash_dict.yaml', 'w') as outfile:
             yaml.dump(hash_dict, outfile)
