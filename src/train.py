@@ -110,7 +110,7 @@ if __name__ == "__main__":
     setup_default_logging()
 
     # create wandb run and save src code files
-    run = wandb.init(project=args.project)
+    run = wandb.init(project=args.project, config=Config)
     wandb.save('./src/*')
 
     main(args=args, wandb_run=run)

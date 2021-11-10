@@ -1,4 +1,6 @@
-from binascii import Error
+### This script upload W&B artifacts to AWS S3:// 
+### For more information, refer here: https://wandb.ai/aarora/reports/reports/How-Weights-and-Biases-can-help-you-with-Audits-and-Regulatory-Guidelines--VmlldzoxMTc1ODk4#but-what-about-sharing-model-artifacts-with-clients?
+
 import hashlib 
 import argparse
 import logging
