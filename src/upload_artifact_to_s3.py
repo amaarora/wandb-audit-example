@@ -1,7 +1,6 @@
 ### This script upload W&B artifacts to AWS S3:// 
 ### For more information, refer here: https://wandb.ai/aarora/reports/reports/How-Weights-and-Biases-can-help-you-with-Audits-and-Regulatory-Guidelines--VmlldzoxMTc1ODk4#but-what-about-sharing-model-artifacts-with-clients?
 
-import hashlib 
 import argparse
 import logging
 import tempfile
@@ -28,6 +27,7 @@ def main(args):
         # create hash dict
         chksum = artifact.digest
         hash_dict = {'filename': fname, 'hash': chksum}
+        _logger.info(f"Model filename and hash: {hash_dict}")
 
         # dump dict to YAML
         with open(tmpdir+'/hash_dict.yaml', 'w') as outfile:
