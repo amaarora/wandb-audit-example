@@ -14,45 +14,35 @@ import yaml
 
 _logger = logging.getLogger('train')
 s3 = boto3.client('s3')
+api = wandb.Api()
 
 
 def main(args):
-    api = wandb.Api()
     artifact = api.artifact(f'{args.project}/{args.filename}:{args.alias}')
+    digest = artifact.digest
 
     with tempfile.TemporaryDirectory() as tmpdir:
         path = artifact.download(tmpdir)
         fname = os.listdir(path)[0]
         fpath = path + '/' + fname
 
-        # create hash dict
-        chksum = artifact.digest
-        hash_dict = {'filename': fname, 'hash': chksum}
-        _logger.info(f"Model filename and hash: {hash_dict}")
+        _logger.info(f"Downloaded artifact {fname} to {fpath} locally.")
 
-        # dump dict to YAML
-        with open(tmpdir+'/hash_dict.yaml', 'w') as outfile:
-            yaml.dump(hash_dict, outfile)
-
-        # get aws hash if file is present in bucket
-        s3_objects = s3.list_objects(Bucket=args.bucket, Prefix=args.key)
-        hash_dict_s3 = {'hash': -1}
+        try: 
+            metadata = s3.head_object(Bucket=args.bucket, Key=fname)['Metadata']
+        except: 
+            warnings.warn(f"""File {fname} does not already exist in Bucket {args.bucket} on AWS.\
+                            Cleaning up AWS bucket for any existing files, and uploading new \
+                            artifact.""")
+            bucket = boto3.resource('s3').Bucket(args.bucket)
+            bucket.objects.all().delete()
+            metadata = {'digest': -1}
         
-        if 'Contents' in s3_objects.keys():
-            try: s3.download_file(args.bucket, 'hash_dict.yaml', tmpdir+'/hash_dict_s3.yaml')
-            except: raise ValueError(f"File hash_dict.yaml not found in s3://{args.bucket}")
-            with open (tmpdir+'/hash_dict_s3.yaml') as f:
-                hash_dict_s3 = yaml.load(f, Loader=yaml.FullLoader)
-            
-            # compare hash
-            if hash_dict['hash'] == hash_dict_s3['hash']: 
-                warnings.warn(f'File {fname} already present in s3://{args.bucket}. Nothing to do.')
-        
-        # upload files to S3
-        if hash_dict_s3['hash']!=hash_dict['hash']:
-            s3.upload_file(fpath, args.bucket, fname)
-            s3.upload_file(tmpdir+'/hash_dict.yaml', args.bucket, 'hash_dict.yaml')
-
+        # upload files to S3 if digests are different 
+        if metadata['digest']!=digest:
+            s3.upload_file(fpath, args.bucket, fname, ExtraArgs={"Metadata": {"digest": digest}})
+        else: 
+            _logger.info(f"File {fname} already exists in Bucket {args.bucket} on AWS with same digest. Nothing to do.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
